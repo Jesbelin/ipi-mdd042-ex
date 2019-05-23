@@ -7,6 +7,8 @@ import com.ipiecoles.java.java230.model.Manager;
 import com.ipiecoles.java.java230.model.Technicien;
 import com.ipiecoles.java.java230.repository.EmployeRepository;
 import com.ipiecoles.java.java230.repository.ManagerRepository;
+import org.joda.time.LocalDate;
+import org.joda.time.format.DateTimeFormat;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +34,15 @@ public class MyRunner implements CommandLineRunner {
     private static final int NB_CHAMPS_TECHNICIEN = 7;
     private static final String REGEX_MATRICULE_MANAGER = "^M[0-9]{5}$";
     private static final int NB_CHAMPS_COMMERCIAL = 7;
+    private static final String REGEX_SALAIRE = "^[0-9]+\\.[0-9]{0,2}$";
+    /*
+    ^ => début de chaîne
+    [0-9] => on un chiffre entre 0 et 9 (compris)
+    + => on veut au moins 1 chiffre
+    \\. => on veut un point (pour la virgule du salaire)
+    {0,2} => on veut de 0 à 2 chiffres après la virgule
+    $ => fin de chaîne
+     */
 
     @Autowired
     private EmployeRepository employeRepository;
@@ -52,7 +63,7 @@ public class MyRunner implements CommandLineRunner {
     */
 
     @Override
-    public void run(String... strings) throws Exception {
+    public void run(String... strings){
         String fileName = "employes.csv";
         readFile(fileName);
         //readFile(strings[0]);
@@ -128,14 +139,9 @@ public class MyRunner implements CommandLineRunner {
         String[] commercialFields = ligneCommercial.split(",");
         //on split la lignes pour séparer chaque colonne. La séparation se fait sur la virgule
 
-        if (commercialFields[0].matches(REGEX_MATRICULE)) {
         //on vérifie si le matricule (1ère colonne, donc '0') respecte bien l'expression régulière d'un matricule
-            Commercial c = new Commercial();
-            employes.add(c);
-        }
-        else {
-            throw new BatchException("Le matricule ne respecte pas les règles");
-        }
+        Commercial c = new Commercial();
+        employes.add(c);
 
     }
 
@@ -147,22 +153,40 @@ public class MyRunner implements CommandLineRunner {
     private void processManager(String ligneManager) throws BatchException {
         String[] managerFields = ligneManager.split(",");
 
-        for (int i = 0; i < managerFields.length; i++){
-
+        if (managerFields.length != NB_CHAMPS_MANAGER){
+            throw new BatchException("Le nombre de champs est incorrect");
         }
+
         if (!managerFields[0].matches(REGEX_MATRICULE)){
             throw new BatchException("Le matricule ne respecte pas les règles");
         }
+
         if (!managerFields[1].matches(REGEX_NOM)){
             throw new BatchException("Le nom ne respecte pas les règles");
         }
-        if (!managerFields[2].matches((REGEX_PRENOM)){
+
+        if (!managerFields[2].matches(REGEX_PRENOM)){
             throw new BatchException("Le prénom ne respecte pas les règles");
         }
 
-            Manager m = new Manager();
-            employes.add(m);
-        
+        try{
+            LocalDate d = DateTimeFormat.forPattern("dd/MM/yyyy").parseLocalDate(managerFields[3]);
+        }
+        catch (Exception e) {
+
+            throw new BatchException( managerFields[3] + " ne respecte pas le format de date dd/MM/yyyy");
+        }
+
+        try {
+            float salary = Float.parseFloat(managerFields[4]);
+        }
+        catch (Exception e){
+            throw new BatchException( managerFields[4] + " n'est pas un format valide de salaire");
+        }
+
+        Manager m = new Manager();
+        employes.add(m);
+
     }
 
     /**
@@ -173,13 +197,8 @@ public class MyRunner implements CommandLineRunner {
     private void processTechnicien(String ligneTechnicien) throws BatchException {
         String[] technicienFields = ligneTechnicien.split(",");
 
-        if (technicienFields[0].matches(REGEX_MATRICULE)){
-            Technicien t = new Technicien();
-            employes.add(t);
-        }
-        else {
-            throw new BatchException("Le matricule ne respecte pas les règles");
-        }
+        Technicien t = new Technicien();
+        employes.add(t);
     }
 
 }
