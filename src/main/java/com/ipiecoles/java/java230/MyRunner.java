@@ -236,6 +236,12 @@ public class MyRunner implements CommandLineRunner {
          * si matricule pas trouvé, on lance l'exception
         */
 
+        /*for (int i = 0; i < employes.size(); i++){
+            on parcourt chaque ligne avec processLine
+            si processLine appelle processManager c'est qu'on a bien un manager
+            si manager on vérifie son matricule
+            si pas de matricule trouvé, on lance l'exception
+        }*/
 
 
         employes.add(t);
